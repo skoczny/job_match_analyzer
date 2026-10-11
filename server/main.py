@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from routes.cv import router as cv_router
 from routes.analyze import router as analyze_router
+from routes.scraper import router as scraper_router
 import os 
 
 print("GEMINI KEY:", os.getenv("GEMINI_API_KEY", "NOT SET"))
@@ -13,3 +14,4 @@ async def health_check():
 
 app.include_router(cv_router, prefix="/api")
 app.include_router(analyze_router, prefix="/api")
+app.include_router(scraper_router, prefix="/api")
