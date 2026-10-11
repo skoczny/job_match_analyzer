@@ -1,10 +1,14 @@
 from fastapi import APIRouter
 from services.scraper import scrape_html
+from pydantic import BaseModel
 
 router = APIRouter()
 
-@router.get("/scrape")
-async def scrape(url: str):
+class ScrapeRequest(BaseModel):
+    url: str
+
+@router.post("/scrape")
+async def scrape(url: ScrapeRequest):
     try:
         text = scrape_html(url)
         return {"url": url, "content": text}
