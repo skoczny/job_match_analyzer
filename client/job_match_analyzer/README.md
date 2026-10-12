@@ -1,75 +1,120 @@
-# React + TypeScript + Vite
+# Job Match Analyzer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An AI-powered tool that compares your CV against job offers and provides a detailed compatibility report. Upload your CV as a PDF, paste a job offer URL, and get instant feedback on your match percentage, matched and missing skills, and actionable suggestions to improve your CV.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Frontend:** React, TypeScript, Tailwind CSS, Vite  
+**Backend:** Python, FastAPI  
+**AI:** Google Gemini API  
+**Infrastructure:** Docker, docker-compose  
+**Testing:** pytest  
+**CI/CD:** GitHub Actions
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- PDF upload and text extraction from CV
+- Job offer scraping from URL (JustJoin.it, No Fluff Jobs, etc.)
+- AI-powered analysis comparing CV against job requirements
+- Match percentage with color-coded indicator
+- Matched skills and missing skills breakdown
+- Actionable suggestions for CV improvement
+- Containerized with Docker for one-command setup
+- Automated testing on every push via GitHub Actions
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Project Structure
 
 ```
+├── .github/
+│   └── workflows/
+│       └── tests.yml          # CI pipeline
+│
+├── client/                    # React frontend
+│   └── src/
+│       └── App.tsx            # Upload form + results display
+│
+└── server/                    # FastAPI backend
+    ├── main.py                # Server entry point, CORS, routers
+    ├── Dockerfile
+    ├── docker-compose.yml
+    ├── routes/
+    │   ├── cv.py              # PDF upload and text extraction
+    │   ├── analyze.py         # CV vs offer analysis via Gemini
+    │   └── scraper.py         # Job offer URL scraping
+    ├── services/
+    │   ├── analyzer.py        # Gemini API integration
+    │   └── scraper.py         # HTML scraping with BeautifulSoup
+    └── tests/
+        └── test_scraper.py    # Unit tests
+```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+## Getting Started
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Prerequisites
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Docker
+- Node.js 18+
+
+### Backend
+
+```bash
+cd server
+```
+
+Create `server/.env`:
 
 ```
+GEMINI_API_KEY=your-gemini-api-key
+DATABASE_URL=postgresql://postgres:postgres@db:5432/job_match
+```
+
+Get a free Gemini API key at [aistudio.google.com](https://aistudio.google.com).
+
+```bash
+docker compose up --build
+```
+
+Backend runs on `http://localhost:8000`. API docs at `http://localhost:8000/docs`.
+
+### Frontend
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+Frontend runs on `http://localhost:5173`.
+
+## API Endpoints
+
+| Method | Endpoint         | Description                                   |
+| ------ | ---------------- | --------------------------------------------- |
+| GET    | `/health`        | Server health check                           |
+| POST   | `/api/upload-cv` | Upload PDF, returns extracted text            |
+| POST   | `/api/scrape`    | Scrape job offer from URL                     |
+| POST   | `/api/analyze`   | Compare CV text with offer text via Gemini AI |
+
+## How It Works
+
+1. **Upload** — user uploads their CV as a PDF file, the server extracts text using pypdf
+2. **Scrape** — user pastes a job offer URL, the server fetches the page and extracts text using BeautifulSoup and httpx
+3. **Analyze** — both texts are sent to Google Gemini with a structured prompt that returns a JSON report with match percentage, matched/missing skills, and improvement suggestions
+4. **Display** — frontend renders the analysis in a clean, color-coded dashboard
+
+## Architecture Decisions
+
+- **FastAPI over Django** — lightweight, async-first, built-in OpenAPI docs, ideal for an API-focused service with no server-side rendering needs.
+- **Gemini API for analysis** — instead of building keyword-matching logic manually, leveraging an LLM provides contextual understanding (e.g., "worked with databases" matches "SQL requirement") and actionable suggestions.
+- **BeautifulSoup + httpx for scraping** — simple, well-documented stack for HTML parsing without the overhead of a headless browser.
+- **Docker from day one** — ensures consistent environments across development and production; one command to start the entire stack.
+- **pytest + GitHub Actions** — automated quality gate; every push runs tests before code reaches production.
+
+## Running Tests
+
+```bash
+cd server
+uv run pytest
+```
+
+Tests also run automatically on every push via GitHub Actions.
